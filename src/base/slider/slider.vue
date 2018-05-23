@@ -1,10 +1,13 @@
 <template>
-    <div class="slider" ref="slider">
-        <div class="slider-group" ref="sliderGroup">
-            <slot></slot>
-            <div class="dots"></div>
-        </div>
+  <div class="slider" ref="slider">
+    <div class="slider-group" ref="sliderGroup">
+      <slot></slot>
+
     </div>
+    <div class="dots">
+      <span class="dot" :class="{active: (currentPageIndex) === index }" v-for="(item, index) in dots" :key="index"></span>
+    </div>
+  </div>
 </template>
 
 <script type="text/ecmascript-6">
@@ -29,11 +32,15 @@ export default {
     setTimeout(() => {
       this._setSliderWidth()
       this._initSlider()
+      if (this.autoPlay) {
+        this._play()
+      }
     }, 20)
   },
   methods: {
     _setSliderWidth() {
       this.children = this.$refs.sliderGroup.children
+      this.dots = new Array(this.children.length)
       let width = 0
       let sliderWidth = this.$refs.slider.clientWidth
       for (let i = 0; i < this.children.length; i++) {
@@ -47,6 +54,18 @@ export default {
       }
       this.$refs.sliderGroup.style.width = width + 'px'
     },
+    _onScrollEnd() {
+      let pageIndex = this.slider.getCurrentPage().pageX
+      this.currentPageIndex = pageIndex
+      if (this.autoPlay) {
+        this._play()
+      }
+    },
+    _onScrollStart() {
+      if (this.autoPlay) {
+        clearTimeout(this.timer)
+      }
+    },
     _initSlider() {
       this.slider = new BScroll(this.$refs.slider, {
         scrollX: true,
@@ -59,10 +78,21 @@ export default {
         },
         click: true
       })
+      this.slider.on('scrollEnd', this._onScrollEnd)
+      this.slider.on('beforeScrollStart', this._onScrollStart)
+    },
+    _play() {
+      this.timer = setTimeout(() => {
+        this.slider.next()
+      }, this.interval)
     }
   },
+
   data() {
-    return {}
+    return {
+      dots: [],
+      currentPageIndex: 0
+    }
   },
   components: {}
 }
