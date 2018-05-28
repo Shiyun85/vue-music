@@ -2,7 +2,6 @@
   <div class="slider" ref="slider">
     <div class="slider-group" ref="sliderGroup">
       <slot></slot>
-
     </div>
     <div class="dots">
       <span class="dot" :class="{active: (currentPageIndex) === index }" v-for="(item, index) in dots" :key="index"></span>
@@ -36,9 +35,16 @@ export default {
         this._play()
       }
     }, 20)
+    window.addEventListener('resize', () => {
+      if (!this.slider) {
+        return
+      }
+      this._setSliderWidth(true)
+      this.slider.refresh()
+    })
   },
   methods: {
-    _setSliderWidth() {
+    _setSliderWidth(isResize) {
       this.children = this.$refs.sliderGroup.children
       this.dots = new Array(this.children.length)
       let width = 0
@@ -49,7 +55,7 @@ export default {
         child.style.width = sliderWidth + 'px'
         width += sliderWidth
       }
-      if (this.loop) {
+      if (this.loop && !isResize) {
         width += 2 * sliderWidth
       }
       this.$refs.sliderGroup.style.width = width + 'px'
@@ -58,6 +64,7 @@ export default {
       let pageIndex = this.slider.getCurrentPage().pageX
       this.currentPageIndex = pageIndex
       if (this.autoPlay) {
+        clearTimeout(this.timer)
         this._play()
       }
     },
@@ -87,7 +94,9 @@ export default {
       }, this.interval)
     }
   },
-
+  destroyed() {
+    clearTimeout(this.timer)
+  },
   data() {
     return {
       dots: [],
