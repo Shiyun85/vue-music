@@ -57,6 +57,7 @@ export default {
       this.touch.y1 = firstTouch.pageY
       this.touch.anchorIndex = anchorIndex
       this._scrollTo(anchorIndex)
+      this.currentIndex = anchorIndex
     },
     onShortcutTouchMove(el) {
       let firstTouch = el.touches[0]
@@ -65,6 +66,7 @@ export default {
       // 向下取整
       let anchorIndex = parseInt(this.touch.anchorIndex) + delta
       this._scrollTo(anchorIndex)
+      this.currentIndex = anchorIndex
     },
     scroll(pos) {
       this.scrollY = pos.y // Y轴滚动位置
@@ -92,7 +94,7 @@ export default {
     },
     scrollY(newY) {
       const listHeight = this.listHeight
-      console.log('newY:', newY)
+
       // 滚动到顶部 newY > 0
       if (newY > 0) {
         this.currentIndex = 0
@@ -105,6 +107,7 @@ export default {
         if (-newY >= height1 && -newY < height2) {
           // 判断新的y轴坐标是否在区间内
           this.currentIndex = i
+          console.log('currentIndex:', this.currentIndex)
           return
         }
       }

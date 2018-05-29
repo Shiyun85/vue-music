@@ -38,10 +38,8 @@ export default {
         probeType: this.probeType,
         click: this.click
       })
-      debugger
       if (this.listenScroll) {
         this.scroll.on('scroll', pos => {
-          debugger
           this.$emit('scroll', pos)
         })
       }
