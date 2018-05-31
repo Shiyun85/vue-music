@@ -4,7 +4,7 @@
       <li v-for="group in data" class="list-group" :key="group.title" ref="listGroup">
         <h2 class="list-group-title">{{group.title}}</h2>
         <ul>
-          <li v-for="item in group.items" class="list-group-item" :key="item.id">
+          <li v-for="item in group.items" class="list-group-item" :key="item.id" @click="selectItem(item)">
             <img v-lazy="item.avatar" class="avatar" />
             <span class="name">{{item.name}}</span>
           </li>
@@ -16,6 +16,9 @@
         <li v-for="(item,index) in shortcutList" :key="item" class="item" :data-index="index" :class="{'current':currentIndex == index}">{{item}}</li>
       </ul>
     </div>
+    <div class="list-fixed" v-show="fixedTitle" ref="fixed">
+      <h1 class="fixed-title">{{fixedTitle}}</h1>
+    </div>
   </scroll>
 </template>
 
@@ -24,6 +27,7 @@ import Scroll from '../scroll/scroll'
 import { getData } from '../../common/js/dom'
 
 const ANCHOR_HEIGHT = 18
+const TITLE_HEIGHT = 30
 export default {
   created() {
     this.touch = {}
@@ -39,7 +43,8 @@ export default {
   data() {
     return {
       scrollY: -1,
-      currentIndex: 0
+      currentIndex: 0,
+      diff: -1
     }
   },
   computed: {
@@ -48,16 +53,27 @@ export default {
         // 生成一个新的数组
         return group.title.substr(0, 1)
       })
+    },
+    fixedTitle() {
+      if (this.scrollY > 0) {
+        return ''
+      }
+      return this.data[this.currentIndex]
+        ? this.data[this.currentIndex].title
+        : ''
     }
   },
   methods: {
+    selectItem(item) {
+      // 不处理任何业务逻辑，只是派发事件
+      this.$emit('select', item)
+    },
     onShortcutTouchStart(el) {
       let anchorIndex = getData(el.target, 'index')
       let firstTouch = el.touches[0]
       this.touch.y1 = firstTouch.pageY
       this.touch.anchorIndex = anchorIndex
       this._scrollTo(anchorIndex)
-      this.currentIndex = anchorIndex
     },
     onShortcutTouchMove(el) {
       let firstTouch = el.touches[0]
@@ -66,12 +82,20 @@ export default {
       // 向下取整
       let anchorIndex = parseInt(this.touch.anchorIndex) + delta
       this._scrollTo(anchorIndex)
-      this.currentIndex = anchorIndex
     },
     scroll(pos) {
       this.scrollY = pos.y // Y轴滚动位置
     },
     _scrollTo(index) {
+      if (!index && index !== 0) {
+        return
+      }
+      if (index < 0) {
+        index = 0
+      } else if (index > this.listHeight.length - 2) {
+        index = this.listHeight.length - 2
+      }
+      this.currentIndex = index
       this.$refs.listview.scrollToElement(this.$refs.listGroup[index], 0)
     },
     _calculateHeight() {
@@ -87,12 +111,14 @@ export default {
     }
   },
   watch: {
+    // 原理是使用Object.properties设置属性的setter方法
     data() {
       setTimeout(() => {
         this._calculateHeight()
       }, 20)
     },
     scrollY(newY) {
+      // 根据滚动位置获取到shortcut位置
       const listHeight = this.listHeight
 
       // 滚动到顶部 newY > 0
@@ -101,18 +127,32 @@ export default {
         return
       }
       // 在中间滚动
+      console.log('newY', newY)
       for (let i = 0; i < listHeight.length - 1; i++) {
         let height1 = listHeight[i]
         let height2 = listHeight[i + 1]
+
         if (-newY >= height1 && -newY < height2) {
           // 判断新的y轴坐标是否在区间内
+
           this.currentIndex = i
-          console.log('currentIndex:', this.currentIndex)
+          this.diff = height2 + newY // 这里获取的是下一个标题到顶部的剩余高度，newY为当前Y轴滚动位置。这里就可以判断是否快到下一个标题出
+
           return
         }
       }
       // 滚动到底部，且 -newY大于最后一个元素的上限 最后一个元素的索引
       this.currentIndex = listHeight.length - 2
+    },
+    diff(newVal) {
+      // 当剩余高度小于标题高度以后开始向上滚动固定标题
+      let fixedTop =
+        newVal > 0 && newVal < TITLE_HEIGHT ? newVal - TITLE_HEIGHT : 0
+      if (this.fixedTop === fixedTop) {
+        return
+      }
+      this.fixedTop = fixedTop
+      this.$refs.fixed.style.transform = `translate3d(0,${fixedTop}px,0)`
     }
   },
   components: { Scroll }
