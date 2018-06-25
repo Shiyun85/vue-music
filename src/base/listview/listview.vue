@@ -30,6 +30,7 @@ const ANCHOR_HEIGHT = 18
 const TITLE_HEIGHT = 30
 export default {
   created() {
+    // 这里可以初始化一些不需要双向绑定的数据
     this.touch = {}
     this.listenScroll = true
     this.listHeight = []
@@ -106,7 +107,7 @@ export default {
       for (let i = 0; i < list.length; i++) {
         let item = list[i]
         height += item.clientHeight
-        this.listHeight.push(height) // 每个item的高度
+        this.listHeight.push(height) // 每个item的高度偏移量，等于此前面item高度累加
       }
     }
   },
@@ -128,6 +129,7 @@ export default {
       }
       // 在中间滚动
       console.log('newY', newY)
+      // 判断滚动到那个shortcut的位置
       for (let i = 0; i < listHeight.length - 1; i++) {
         let height1 = listHeight[i]
         let height2 = listHeight[i + 1]
@@ -136,13 +138,13 @@ export default {
           // 判断新的y轴坐标是否在区间内
 
           this.currentIndex = i
-          this.diff = height2 + newY // 这里获取的是下一个标题到顶部的剩余高度，newY为当前Y轴滚动位置。这里就可以判断是否快到下一个标题出
+          this.diff = height2 + newY // 这里获取的是下一个标题到顶部的剩余高度，newY为当前Y轴滚动位置。这里就可以判断是否快到下一个标题处
 
           return
         }
       }
       // 滚动到底部，且 -newY大于最后一个元素的上限 最后一个元素的索引
-      this.currentIndex = listHeight.length - 2
+      //this.currentIndex = listHeight.length - 2
     },
     diff(newVal) {
       // 当剩余高度小于标题高度以后开始向上滚动固定标题

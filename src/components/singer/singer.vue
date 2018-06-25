@@ -29,7 +29,7 @@ export default {
         // router 函数式跳转
         path: `/singer/${singer.id}`
       })
-      this.setSinger(singer)
+      this.setSinger(singer) // 点击保存当前歌手数据到vuex
     },
     _getSingerList() {
       getSingerList().then(res => {
